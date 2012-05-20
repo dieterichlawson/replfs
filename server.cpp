@@ -51,6 +51,14 @@ int main(const int argc, char* argv[]){
     portNum = atoi(argv[2]);
     dropPercent = atoi(argv[6]);
     mountPath = argv[4];
+    if(mountPath[mountPath.length()-1] != '/'){
+      mountPath +='/';
+    }
+    int ret = mkdir(mountPath.c_str(),0777);
+    if(ret == -1){
+      printf("machine already in use\n");
+      return -1;
+    }
   }
   LOG("Starting server...\n");
   netInit(portNum,dropPercent);

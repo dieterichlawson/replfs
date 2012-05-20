@@ -4,17 +4,17 @@
 extern "C" {
 #endif
 
-int InitReplFs(unsigned short portNum, int packetLoss, int numServers);
+extern int InitReplFs(unsigned short portNum, int packetLoss, int numServers);
 
-int OpenFile(char *name);
+extern int OpenFile(char *name);
 
-int WriteBlock(int fd, char *buffer, int byteOffset, int blockSize);
+extern int WriteBlock(int fd, char *buffer, int byteOffset, int blockSize);
 
-int Commit(int fd);
+extern int Commit(int fd);
 
-int Abort(int fd);
+extern int Abort(int fd);
 
-int CloseFile(int fd);
+extern int CloseFile(int fd);
 
 #ifdef __cplusplus
 }

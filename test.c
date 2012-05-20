@@ -2,12 +2,12 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
-#define DEFAULT_PORT 44017
+#define DEFAULT_PORT 44018
 
 #define MAX_COMMITS 200 
 
 #define MAX_WRITES_PER_COMMIT 127
-#define NUM_SERVERS 4
+#define NUM_SERVERS 1
 
 int descriptors[5];
 
@@ -17,12 +17,12 @@ char* generateRandomString(int size);
 int main(const int argc, const char* argv[]){
   InitReplFs(DEFAULT_PORT,10,NUM_SERVERS);
   int fd = OpenFile("hello.txt");
-  for(int i = 0; i < 100; i++){
+  for(int i = 0; i < 5; i++){
     char blah[3];
     sprintf(blah,"%d\n",i);
     WriteBlock(fd,blah,0,2);
   }
-  Abort(fd);
+  Commit(fd);
 }
 
 void randomTest(){
