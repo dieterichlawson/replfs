@@ -1,0 +1,4 @@
+replfs_net.o: replfs_net.cpp replfs_net.h packets.h log.h
+client.o: client.cpp client.h replfs_net.h packets.h log.h
+server.o: server.cpp packets.h replfs_net.h log.h
+test.o: test.c client.h
