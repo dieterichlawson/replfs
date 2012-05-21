@@ -11,10 +11,11 @@
 #include "log.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <limits.h>
 
-#define DEFAULT_PORT 44017
+#define DEFAULT_PORT 44018
 
 #define WORD_SIZE_BYTES ((int) sizeof(unsigned int))
 #define WORD_SIZE_BITS (WORD_SIZE_BYTES * CHAR_BIT)
@@ -29,6 +30,8 @@ static std::map<uint32_t,std::vector<WriteBlockPacket*> > stagedWrites;
 static std::map<uint32_t,uint32_t> commitNums;
 static std::set<uint32_t> readyToCommit;
 
+extern Sockaddr address;
+
 void listen();
 
 void handlePacket(void* packet, uint8_t type);
@@ -40,7 +43,6 @@ void handleCommit(CommitPacket* packet);
 void handleAbort(AbortPacket* packet);
 
 int main(const int argc, char* argv[]){
-  srand(time(NULL));
   unsigned short portNum;
   int dropPercent;
   if(argc == 1){
@@ -113,6 +115,13 @@ void handlePacket(void* packet, uint8_t type){
  * the randomness of rand() isn't affected by much.
  */
 void handleRollCall(){
+  //re-seed the random number generator
+  unsigned int randSeed = (unsigned int) address.sin_addr.s_addr;
+  randSeed ^= (unsigned int) getpid();
+  struct timeval curtime;
+  gettimeofday(&curtime,NULL);
+  randSeed ^= (unsigned int) curtime.tv_usec;
+  srand(randSeed);
   serverId = rand();
   serverId += rand();
   RollCallAckPacket packet;
@@ -207,7 +216,7 @@ void sendWriteResendRequest(uint32_t fileId, uint32_t commitNum, uint8_t numWrit
 
 void writeCommitToDisk(uint32_t fileId, uint32_t commitNum){
   std::string filePath = mountPath + filenames[fileId];
-  int fd = open(filePath.c_str(),O_WRONLY | O_CREAT, 0644);
+  int fd = open(filePath.c_str(),O_WRONLY | O_CREAT, 0777);
   if(fd == -1){
     LOG("Error opening file %s\n",filePath.c_str());
     return;

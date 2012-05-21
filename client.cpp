@@ -326,13 +326,19 @@ void resendWrites(uint32_t fileId, uint32_t commitNum, uint8_t reqWrites[16]){
   }
 }
 
+int performAbort(int fd, bool closeFlag);
+
 int Abort(int fd){
+  return performAbort(fd,false);
+}
+
+int performAbort(int fd, bool closeFlag){
   if(openFileIds.count(fd) == 0) return ERR_RETURN;
   cleanupAfterCommit(fd,openFiles[fd]->commitNum);
   AbortPacket abort;
   abort.fileId = fd;
   abort.commitNum = openFiles[fd]->commitNum-1;
-  abort.closeFlag = 0;
+  abort.closeFlag = closeFlag;
   sendPacket(&abort,ABORT);
   //wait for acknowledgements
   int timeoutNum = 0;
@@ -359,5 +365,9 @@ int Abort(int fd){
 }
 
 int CloseFile(int fd){
-  return performCommit(fd,true);
+  if(stagedWrites[fd].size() != 0){
+    return performCommit(fd,true);
+  }else{
+    return performAbort(fd,true);
+  }
 }

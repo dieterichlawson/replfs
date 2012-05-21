@@ -17,7 +17,7 @@
 #define HEARTBEAT_USEC (HEARTBEAT_MSEC * (USEC_PER_MSEC))
 
 static int theSocket;
-static Sockaddr address;
+Sockaddr address;
 static Sockaddr groupAddr;
 static int dropPercent;
 
