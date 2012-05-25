@@ -1,7 +1,6 @@
 #include "replfs_net.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <netdb.h>
@@ -10,6 +9,7 @@
 #include <stdbool.h>
 #include "packets.h"
 #include "log.h"
+#include <string>
 
 #define USEC_PER_SEC 1000000
 #define USEC_PER_MSEC 1000
@@ -28,6 +28,8 @@ static size_t packetSize(uint8_t type);
 static void receivePacket(ReplfsPacket* packet, struct sockaddr* source);
 static void incrementTimeout(struct timeval* timeout);
 static void subtractTimevals(const struct timeval* one, const struct timeval* two, struct timeval* result);
+static inline uint32_t ntohl_wrap(uint32_t in){ return ntohl(in);}
+static inline uint32_t htonl_wrap(uint32_t in){ return htonl(in);}
 
 /* Returns the next event*/
 void nextEvent(ReplfsEvent* event){
@@ -92,8 +94,8 @@ int sendPacket(void* packet, uint8_t type){
   return sendto(theSocket,&outerPacket,packetSize(type),0,(const struct sockaddr*) &groupAddr,sizeof(Sockaddr));
 }
 
-static void Error(char* errorString){
-  fprintf(stderr, "ReplFS: %s\n",errorString);
+static void Error(std::string errorString){
+  fprintf(stderr, "ReplFS: %s\n",errorString.c_str());
   perror("ReplFS");
   exit(-1);
 }
@@ -120,6 +122,11 @@ void netInit(unsigned short replfsPort, int packetLoss){
 	if (setsockopt(theSocket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) < 0) {
 		Error("setsockopt failed (SO_REUSEADDR)");
 	}
+#ifdef __APPLE__
+  if (setsockopt(theSocket, SOL_SOCKET, SO_REUSEPORT, &reuse, sizeof(reuse)) < 0) {
+		Error("setsockopt failed (SO_REUSEPORT)");
+	}
+#endif
   //bind the socket to address nullAddr
 	Sockaddr nullAddr;
 	nullAddr.sin_family = AF_INET;
@@ -137,12 +144,12 @@ void netInit(unsigned short replfsPort, int packetLoss){
 	struct ip_mreq mreq;
 	mreq.imr_multiaddr.s_addr = htonl(GROUP);
 	mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-	if (setsockopt(theSocket, IPPROTO_IP, IP_ADD_MEMBERSHIP,(char *)&mreq, sizeof(mreq)) < 0){
-		Error("setsockopt failed (IP_ADD_MEMBERSHIP)");
-	}
+  if(setsockopt(theSocket,IPPROTO_IP,IP_ADD_MEMBERSHIP,(char*)&mreq,sizeof(mreq)) <0){
+    Error("setsockopt failed (IP_ADD_MEMBERSHIP)");
+  }
   //Get the multi-cast address ready to use
-	memcpy(&groupAddr, &nullAddr, sizeof(Sockaddr));
-	groupAddr.sin_addr.s_addr = htonl(GROUP);
+  memcpy(&groupAddr, &nullAddr, sizeof(Sockaddr));
+  groupAddr.sin_addr.s_addr = htonl(GROUP);
 }
 
 static Sockaddr* resolveHost(register char* name){
@@ -164,7 +171,7 @@ static Sockaddr* resolveHost(register char* name){
 //Packet conversion routines
 
 static uint32_t convertLong(uint32_t toConvert,bool incoming){
-  uint32_t (*convert)(uint32_t) = incoming ? ntohl : htonl;
+  uint32_t (*convert)(uint32_t) = incoming ? ntohl_wrap : htonl_wrap;
   return convert(toConvert);
 }
 
@@ -261,3 +268,5 @@ static size_t packetSize(uint8_t type){
   }
   return result;
 }
+
+

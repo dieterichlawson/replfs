@@ -1,11 +1,16 @@
 CXX = /usr/bin/g++
+#We want to use g++ to compile our C files
 CC = /usr/bin/g++
 
 # Compiler Flags
 # -g		generate debugging symbols
 # -O0		no optimizations (for now)
 # -Wall provide diagnostic warnings
-CXXFLAGS = -g -O0 -Wall -DDEBUG
+CXXFLAGS =
+CFLAGS =
+DBGFLAGS = -g -O0 -Wall -DDEBUG
+RLSFLAGS = -O3 -Wall
+
 #Linker flags
 LDFLAGS =
 
@@ -14,7 +19,13 @@ SOURCES = replfs_net.cpp client.cpp server.cpp test.c
 OBJECTS = replfs_net.o client.o server.o test.o
 TARGETS = replFsServer libclientReplFs.a testRFS
 
+default: CXXFLAGS += $(RLSFLAGS)
+default: CFLAGS += $(RLSFLAGS)
 default: $(TARGETS)
+
+debug: CXXFLAGS += $(DBGFLAGS)
+debug: CFLAGS += $(DBGFLAGS)
+debug: $(TARGETS)
 
 replFsServer: server.o replfs_net.o
 	$(CXX) $(CXXFLAGS) -o $@ $^

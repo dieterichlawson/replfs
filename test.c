@@ -7,7 +7,7 @@
 #define MAX_COMMITS 500
 
 #define MAX_WRITES_PER_COMMIT 127
-#define NUM_SERVERS 8
+#define NUM_SERVERS 1
 
 int descriptors[5];
 
